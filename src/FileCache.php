@@ -95,12 +95,61 @@ class FileCache
         }
         $file_name  = $this->getFileName($id);
         $lifetime   = time() + $lifetime;
+        var_dump($lifetime);
         $serialized = serialize($data);
         $result     = file_put_contents($file_name, $lifetime . PHP_EOL . $serialized);
         if ($result === false) {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Check is cache exists and is not expired
+     *
+     * @return bool
+     */
+    public function isExpired($id){
+        $file_name = $this->getFileName($id);
+
+        if (!is_file($file_name) || !is_readable($file_name)) {
+            return true;
+        }
+
+        $lines    = file($file_name);
+        $lifetime = array_shift($lines);
+        $lifetime = (int) trim($lifetime);
+
+        return ($lifetime === 0 || $lifetime < time());
+    }
+
+    /**
+     * Reads data without checking lifetime, and increase life time
+     *
+     * @param string $id
+     * @param int $time     
+     */
+    public function getAndRenewLifetime($id, $time=3600){
+        $file_name = $this->getFileName($id);
+
+        if (!is_file($file_name) || !is_readable($file_name)) {
+            return false;
+        }
+
+        $lines    = file($file_name);
+        $lifetime = array_shift($lines);
+        $lifetime = (int) trim($lifetime);
+
+        $serialized = join('', $lines);
+        $data       = unserialize($serialized);
+
+        $lifetime = (int)$time + $lifetime;
+        $serialized = serialize($data);
+        $result     = file_put_contents($file_name, $lifetime . PHP_EOL . $serialized);
+        if ($result === false) {
+            return false;
+        }
+        return $data;
     }
 
     //------------------------------------------------
@@ -150,3 +199,4 @@ class FileCache
         return $file;
     }
 }
+
