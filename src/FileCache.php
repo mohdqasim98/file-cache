@@ -95,7 +95,6 @@ class FileCache
         }
         $file_name  = $this->getFileName($id);
         $lifetime   = time() + $lifetime;
-        var_dump($lifetime);
         $serialized = serialize($data);
         $result     = file_put_contents($file_name, $lifetime . PHP_EOL . $serialized);
         if ($result === false) {
